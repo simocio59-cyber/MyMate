@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MyMate — App</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{--navy:#13254d;--violet:#8b6cf6;--violet-l:#c9b8ff;--sky:#eaf2ff;--cream:#fbf8f3;--text:#3b4560;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Inter,sans-serif;min-height:100vh;display:grid;place-items:center;
+       background:radial-gradient(circle at 30% 20%,#1f3670,var(--navy));padding:30px}
+
+  /* ---------- TÉLÉPHONE ---------- */
+  .phone{width:375px;height:780px;background:#0b1630;border-radius:52px;padding:12px;
+         box-shadow:0 40px 100px rgba(0,0,0,.5),0 0 0 2px #2a3a63;position:relative}
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:30px;
+         background:#0b1630;border-radius:0 0 18px 18px;z-index:10}
+  .screen{background:var(--cream);height:100%;border-radius:42px;overflow:hidden;display:flex;flex-direction:column}
+  .status{display:flex;justify-content:space-between;padding:14px 28px 6px;font-size:.8rem;font-weight:600;color:var(--navy)}
+
+  /* ---------- EN-TÊTE ---------- */
+  header{display:flex;align-items:center;justify-content:space-between;padding:10px 22px 14px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'DM Serif Display';font-size:1.5rem;color:var(--navy)}
+  .logo{width:36px;height:36px;border-radius:50% 50% 50% 12%;background:linear-gradient(135deg,var(--violet-l),var(--violet));
+        display:flex;align-items:center;justify-content:center;gap:2px}
+  .logo i{width:2.5px;background:#fff;border-radius:2px;animation:w 1.2s infinite ease-in-out}
+  .logo i:nth-child(1){height:7px}.logo i:nth-child(2){height:14px;animation-delay:.15s}
+  .logo i:nth-child(3){height:10px;animation-delay:.3s}.logo i:nth-child(4){height:15px;animation-delay:.45s}
+  @keyframes w{50%{transform:scaleY(.4)}}
+  .device{display:flex;align-items:center;gap:6px;background:#fff;padding:6px 12px;border-radius:50px;
+          font-size:.75rem;color:var(--navy);box-shadow:0 4px 14px rgba(19,37,77,.08)}
+  .dot{width:8px;height:8px;border-radius:50%;background:#3ccf7a;box-shadow:0 0 8px #3ccf7a}
+
+  /* ---------- CONTENU ---------- */
+  main{flex:1;overflow-y:auto;padding:0 18px 10px}
+  main::-webkit-scrollbar{display:none}
+  .view{display:none;animation:fade .3s}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}}
+  h2{font-family:'DM Serif Display';font-weight:400;color:var(--navy);font-size:1.6rem;margin:6px 4px 14px}
+  .sub{font-family:'DM Serif Display';font-weight:400;color:var(--navy);font-size:1.15rem;margin:20px 4px 10px}
+
+  /* ---------- CHAT ---------- */
+  .chat{display:flex;flex-direction:column;gap:10px;padding-bottom:10px}
+  .day{text-align:center;font-size:.7rem;color:#9aa3bb;margin:6px 0}
+  .msg{max-width:80%;padding:11px 15px;border-radius:20px;font-size:.88rem;line-height:1.45;animation:pop .3s}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}}
+  .msg small{color:#8a93ab}
+  .mate{background:#fff;color:var(--navy);border-bottom-left-radius:5px;box-shadow:0 3px 12px rgba(0,0,0,.05)}
+  .me{background:var(--violet);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
+  .typing{display:flex;gap:4px;padding:14px 16px}
+  .typing span{width:6px;height:6px;border-radius:50%;background:var(--violet-l);animation:b 1s infinite}
+  .typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+  @keyframes b{50%{transform:translateY(-4px);background:var(--violet)}}
+
+  /* Bulle d'automatisation */
+  .auto{min-width:80%;border-left:3px solid var(--violet)}
+  .auto-title{font-weight:600;font-size:.75rem;color:var(--violet);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
+  .step{display:flex;gap:8px;font-size:.82rem;padding:3px 0;opacity:.45;transition:.3s}
+  .step.ok{opacity:1}
+  .step i{font-style:normal}
+  .link{margin-top:8px;background:var(--sky);border:none;border-radius:50px;padding:7px 13px;font:inherit;
+        font-size:.78rem;color:var(--navy);font-weight:600;cursor:pointer}
+  .link:hover{background:var(--violet-l)}
+
+  /* Suggestions + saisie */
+  .sugg{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 0}
+  .sugg::-webkit-scrollbar{display:none}
+  .sg{flex-shrink:0;background:#fff;border:1px solid #ece8fb;border-radius:50px;padding:7px 12px;font-size:.74rem;
+      color:var(--navy);cursor:pointer;white-space:nowrap}
+  .sg:hover{border-color:var(--violet);color:var(--violet)}
+  .input{display:flex;gap:8px;padding:10px 16px}
+  .input input{flex:1;border:none;background:#fff;border-radius:50px;padding:13px 18px;font:inherit;font-size:.88rem;
+               outline:none;box-shadow:0 3px 12px rgba(0,0,0,.05)}
+  .send{width:46px;height:46px;border:none;border-radius:50%;background:var(--navy);color:#fff;font-size:1.1rem;cursor:pointer;transition:.2s}
+  .send:hover{background:var(--violet)}
+  .send.rec{background:var(--violet);box-shadow:0 0 0 8px rgba(139,108,246,.25)}
+
+  /* ---------- CARTES ---------- */
+  .card{background:#fff;border-radius:22px;padding:16px;margin-bottom:12px;box-shadow:0 4px 16px rgba(19,37,77,.06);
+        display:flex;gap:14px;align-items:center}
+  .card.fresh{animation:hl 2.5s ease-out}
+  @keyframes hl{0%,40%{box-shadow:0 0 0 2px var(--violet),0 8px 24px rgba(139,108,246,.35)}}
+  .ico{width:46px;height:46px;border-radius:14px;background:var(--sky);display:grid;place-items:center;font-size:1.2rem;flex-shrink:0}
+  .card b{color:var(--navy);font-size:.92rem;display:block}
+  .card small{color:#8a93ab;font-size:.78rem}
+  .badge{margin-left:auto;font-size:.7rem;padding:5px 10px;border-radius:50px;font-weight:600;white-space:nowrap}
+  .ok{background:#e3f8ec;color:#1f9d57}.wait{background:#fff4dd;color:#c48a00}.now{background:#efe9ff;color:var(--violet)}
+  .draft{background:#eef0f5;color:#6b7591}
+  .summary{background:linear-gradient(135deg,var(--navy),#2b437f);color:#dfe5f5;border-radius:24px;padding:20px;margin-bottom:16px}
+  .summary h3{font-family:'DM Serif Display';font-weight:400;color:#fff;font-size:1.3rem;margin-bottom:6px}
+  .summary p{font-size:.85rem;line-height:1.5}
+
+  /* ---------- PENDENTIF ---------- */
+  .pendant-zone{text-align:center;padding:10px 0 20px}
+  .chain{width:2px;height:60px;background:linear-gradient(transparent,#c8c8d4);margin:auto}
+  .pendant{width:110px;height:110px;margin:auto;border-radius:50%;
+           background:radial-gradient(circle at 30% 30%,#fff,#e8e8ef 50%,#b9b9c9);
+           box-shadow:0 18px 40px rgba(19,37,77,.25);display:grid;place-items:center;animation:sw 4s ease-in-out infinite}
+  .pendant::after{content:"";width:26px;height:26px;border-radius:50%;background:var(--violet);
+                  box-shadow:0 0 22px var(--violet);animation:p 2s infinite}
+  @keyframes sw{0%,100%{transform:rotate(3deg)}50%{transform:rotate(-3deg)}}
+  @keyframes p{50%{opacity:.35}}
+  .toggle{margin-left:auto;width:44px;height:26px;border-radius:50px;background:var(--violet);position:relative;cursor:pointer;flex-shrink:0}
+  .toggle::after{content:"";position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+  .toggle.off{background:#d5d9e4}.toggle.off::after{right:21px}
+
+  /* ---------- CONTACT SAV ---------- */
+  label.q{display:block;font-size:.8rem;font-weight:600;color:var(--navy);margin:16px 4px 8px}
+  .field{width:100%;background:#fff;border:1.5px solid transparent;border-radius:16px;padding:13px 15px;
+         font:inherit;font-size:.85rem;color:var(--navy);outline:none;box-shadow:0 3px 12px rgba(0,0,0,.05)}
+  .field:focus{border-color:var(--violet-l)}
+  textarea.field{resize:none;height:90px}
+  .field[readonly]{color:#8a93ab}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{padding:8px 14px;border-radius:50px;background:#fff;font-size:.78rem;cursor:pointer;
+        border:1.5px solid transparent;box-shadow:0 3px 10px rgba(0,0,0,.05);transition:.2s}
+  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .opt{background:#fff;border-radius:16px;padding:12px;text-align:center;font-size:.8rem;cursor:pointer;
+       border:1.5px solid transparent;box-shadow:0 3px 10px rgba(0,0,0,.05);transition:.2s}
+  .opt span{display:block;font-size:1.3rem;margin-bottom:4px}
+  .chip.sel,.opt.sel{border-color:var(--violet);background:#f6f2ff;color:var(--violet);font-weight:600}
+  .upload{border:1.5px dashed var(--violet-l);border-radius:16px;padding:16px;text-align:center;
+          font-size:.8rem;color:var(--violet);cursor:pointer;background:#fff}
+  .check{display:flex;gap:10px;align-items:flex-start;font-size:.78rem;margin:16px 4px;line-height:1.4;cursor:pointer}
+  .check input{accent-color:var(--violet);margin-top:2px}
+  .submit{width:100%;padding:15px;border:none;border-radius:50px;background:var(--navy);color:#fff;
+          font:inherit;font-weight:600;cursor:pointer;margin-bottom:14px;transition:.2s}
+  .submit:hover{background:var(--violet)}
+  .err{color:#d64545;font-size:.75rem;margin:0 4px 10px;display:none}
+  .done{text-align:center;padding:50px 10px}
+  .done .big{width:84px;height:84px;border-radius:50%;background:#e3f8ec;display:grid;place-items:center;
+             font-size:2.2rem;margin:0 auto 18px}
+  .done p{font-size:.88rem;line-height:1.6;margin-bottom:24px}
+
+  /* ---------- BARRE D'ONGLETS ---------- */
+  nav{display:flex;justify-content:space-around;padding:10px 6px 22px;background:#fff;border-top:1px solid #eee}
+  nav button{position:relative;background:none;border:none;font:inherit;font-size:.66rem;color:#9aa3bb;display:flex;flex-direction:column;
+             align-items:center;gap:4px;cursor:pointer;padding:4px 6px;border-radius:14px}
+  nav button span{font-size:1.25rem;filter:grayscale(1);opacity:.6}
+  nav button.active{color:var(--violet);font-weight:600}
+  nav button.active span{filter:none;opacity:1}
+  nav button.notif::after{content:"";position:absolute;top:2px;right:8px;width:9px;height:9px;border-radius:50%;
+                          background:#ff5a5f;border:2px solid #fff}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen">
+    <div class="status"><span>9:41</span><span>📶 🔋</span></div>
+
+    <header>
+      <div class="brand"><div class="logo"><i></i><i></i><i></i><i></i></div>MyMate</div>
+      <div class="device"><div class="dot"></div>Connecté · 82%</div>
+    </header>
+
+    <main>
+      <!-- CHAT -->
+      <section class="view active" id="chat">
+        <div class="chat" id="messages">
+          <div class="day">Aujourd'hui</div>
+          <div class="msg mate">Bonjour Thomas ☀️ Vous avez 3 RDV aujourd'hui. Le premier est à 9h30 chez Mme Leroy.</div>
+          <div class="msg me">Fais-moi un devis pour sa salle de bain</div>
+          <div class="msg mate">C'est fait ✅ 2 450 € TTC, envoyé à Mme Leroy pour validation.</div>
+          <div class="msg me">Je finis à quelle heure ?</div>
+          <div class="msg mate">16h15. Assez tôt pour un foot avec les enfants ⚽</div>
+        </div>
+      </section>
+
+      <!-- JOURNÉE (générée automatiquement) -->
+      <section class="view" id="day"></section>
+
+      <!-- DEVIS (générés automatiquement) -->
+      <section class="view" id="quotes"></section>
+
+      <!-- PENDENTIF -->
+      <section class="view" id="device">
+        <h2>Mon pendentif</h2>
+        <div class="pendant-zone"><div class="chain"></div><div class="pendant"></div></div>
+        <div class="card"><div class="ico">🔋</div><div><b>Batterie</b><small>82 % · environ 2 jours</small></div></div>
+        <div class="card"><div class="ico">🎙️</div><div><b>Écoute active</b><small>MyMate entend vos demandes</small></div><div class="toggle"></div></div>
+        <div class="card"><div class="ico">🔔</div><div><b>Rappels vocaux</b><small>Avant chaque RDV</small></div><div class="toggle"></div></div>
+        <div class="card"><div class="ico">🌙</div><div><b>Mode famille</b><small>Silence après 18h</small></div><div class="toggle off"></div></div>
+      </section>
+
+      <!-- CONTACT SAV -->
+      <section class="view" id="contact">
+        <h2>Contact SAV</h2>
+
+        <div id="savForm">
+          <div class="summary">
+            <h3>Une question ? On est là.</h3>
+            <p>Notre équipe répond en moins de 2 h en moyenne, du lundi au samedi.</p>
+          </div>
+
+          <label class="q">1. Quel est le problème ?</label>
+          <select class="field" id="cat">
+            <option value="">Choisir une catégorie…</option>
+            <option>Le pendentif ne s'allume pas</option>
+            <option>Problème de connexion Bluetooth</option>
+            <option>Batterie / recharge</option>
+            <option>MyMate ne comprend pas mes demandes</option>
+            <option>Devis ou rendez-vous incorrects</option>
+            <option>Autre</option>
+          </select>
+
+          <label class="q">2. Décrivez le problème</label>
+          <textarea class="field" id="desc" placeholder="Ex : depuis ce matin, le pendentif clignote en rouge…"></textarea>
+
+          <label class="q">3. Depuis quand ?</label>
+          <div class="chips" id="since">
+            <div class="chip">Aujourd'hui</div><div class="chip">Quelques jours</div><div class="chip">Plus d'une semaine</div>
+          </div>
+
+          <label class="q">4. Niveau d'urgence</label>
+          <div class="chips" id="urgency">
+            <div class="chip">🟢 Faible</div><div class="chip">🟡 Gênant</div><div class="chip">🔴 Bloquant</div>
+          </div>
+
+          <label class="q">5. Avez-vous déjà redémarré le pendentif ?</label>
+          <div class="chips" id="restart">
+            <div class="chip">Oui</div><div class="chip">Non</div>
+          </div>
+
+          <label class="q">6. Comment souhaitez-vous être contacté ?</label>
+          <div class="contact-grid" id="contactWay">
+            <div class="opt" data-v="phone" data-l="téléphone"><span>📞</span>Appel</div>
+            <div class="opt" data-v="sms" data-l="SMS"><span>💬</span>SMS</div>
+            <div class="opt" data-v="email" data-l="e-mail"><span>✉️</span>E-mail</div>
+            <div class="opt" data-v="app" data-l="message dans l'app"><span>📱</span>Dans l'app</div>
+          </div>
+          <input class="field" id="coord" style="display:none;margin-top:10px" />
+
+          <label class="q">7. Quand êtes-vous disponible ?</label>
+          <div class="chips" id="slot">
+            <div class="chip">Matin</div><div class="chip">Midi</div><div class="chip">Après-midi</div><div class="chip">Soir</div>
+          </div>
+
+          <label class="q">8. Photo du problème (facultatif)</label>
+          <div class="upload" id="upload">📷 Ajouter une photo</div>
+
+          <label class="q">Numéro de série du pendentif</label>
+          <input class="field" value="MM-2026-04821" readonly />
+
+          <label class="check"><input type="checkbox" checked /> Envoyer le diagnostic du pendentif pour aider le technicien</label>
+
+          <p class="err" id="err">Merci de répondre aux questions 1, 2 et 6 (avec vos coordonnées).</p>
+          <button class="submit" id="sendSav">Envoyer ma demande</button>
+        </div>
+
+        <div class="done" id="savDone" style="display:none">
+          <div class="big">✅</div>
+          <h2>Demande envoyée !</h2>
+          <p id="recap"></p>
+          <button class="submit" id="newSav">Nouvelle demande</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- SAISIE DU CHAT -->
+    <div id="inputBar">
+      <div class="sugg">
+        <div class="sg" data-fill="J'ai un nouveau rendez-vous avec ">📅 Nouveau RDV</div>
+        <div class="sg" data-send="Fais un devis pour M. Petit de 850 €">📄 Faire un devis</div>
+        <div class="sg" data-send="Je finis à quelle heure ?">🕓 Je finis quand ?</div>
+        <div class="sg" data-send="C'est quoi ma journée ?">🗓️ Ma journée</div>
+        <div class="sg" data-send="Annule le RDV avec M. Durand">❌ Annuler un RDV</div>
+      </div>
+      <div class="input">
+        <input id="txt" placeholder="Écrivez à MyMate…" autocomplete="off" />
+        <button class="send" id="mic" title="Dicter">🎙️</button>
+      </div>
+    </div>
+
+    <nav>
+      <button class="active" data-v="chat"><span>💬</span>Chat</button>
+      <button data-v="day"><span>📅</span>Journée</button>
+      <button data-v="quotes"><span>📄</span>Devis</button>
+      <button data-v="device"><span>✦</span>Pendentif</button>
+      <button data-v="contact"><span>🛟</span>Contact</button>
+    </nav>
+  </div>
+</div>
+
+<script>
+  const main = document.querySelector('main');
+  const inputBar = document.getElementById('inputBar');
+  const NOW = 9 * 60 + 41; // heure affichée sur le téléphone (9:41)
+
+  // ================= DONNÉES =================
+  const rdvs = [
+    { name: 'Mme Leroy',      min: 570, motif: 'Rénovation salle de bain', icon: '🛁', day: null },
+    { name: 'M. Durand',      min: 705, motif: 'Fuite cuisine',            icon: '🔧', day: null },
+    { name: 'Famille Martin', min: 870, motif: 'Chauffe-eau',              icon: '🏠', day: null }
+  ];
+  const devis = [
+    { name: 'Mme Leroy',        amount: '2 450 €', date: "aujourd'hui", status: 'Envoyé' },
+    { name: 'M. Durand',        amount: '380 €',   date: 'hier',        status: 'Signé' },
+    { name: 'SCI Les Tilleuls', amount: '5 900 €', date: '18 oct.',     status: 'Signé' },
+    { name: 'M. Bernard',       amount: '1 120 €', date: '15 oct.',     status: 'Envoyé' }
+  ];
+
+  // ================= OUTILS =================
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/’/g, "'");
+  const fmt = m => `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`;
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const todayList = () => rdvs.filter(r => !r.day).sort((a, b) => a.min - b.min);
+
+  // ================= AFFICHAGE JOURNÉE / DEVIS =================
+  function rdvStatus(r) {
+    if (r.day) return ['wait', r.day];
+    if (r.min + 90 < NOW) return ['ok', 'Terminé'];
+    if (r.min <= NOW) return ['now', 'En cours'];
+    return ['wait', 'À venir'];
+  }
+  const rdvCard = r => {
+    const [cls, txt] = rdvStatus(r);
+    return `<div class="card${r.fresh ? ' fresh' : ''}"><div class="ico">${r.icon}</div>
+      <div><b>${esc(r.name)}</b><small>${fmt(r.min)}${r.motif ? ' · ' + esc(r.motif) : ''}</small></div>
+      <span class="badge ${cls}">${txt}</span></div>`;
+  };
+
+  function renderDay() {
+    const today = todayList(), later = rdvs.filter(r => r.day);
+    const end = today.length ? today[today.length - 1].min + 105 : 0;
+    let h = `<h2>Ma journée</h2><div class="summary"><h3>${today.length} RDV · ${today.length * 14} km</h3>
+             <p>Tournée optimisée automatiquement par MyMate. Vous gagnez 35 min par rapport à hier.</p></div>`;
+    h += today.map(rdvCard).join('');
+    if (today.length) h += `<div class="card"><div class="ico">⚽</div><div><b>Temps libre</b><small>${fmt(end)} · Profitez !</small></div></div>`;
+    if (later.length) h += `<h3 class="sub">Prochains jours</h3>` + later.map(rdvCard).join('');
+    document.getElementById('day').innerHTML = h;
+  }
+
+  function renderQuotes() {
+    const cls = { 'Envoyé': 'wait', 'Signé': 'ok', 'Brouillon': 'draft' };
+    document.getElementById('quotes').innerHTML = '<h2>Mes devis</h2>' + devis.map(d =>
+      `<div class="card${d.fresh ? ' fresh' : ''}"><div class="ico">📄</div>
+       <div><b>${esc(d.name)}</b><small>${d.amount} · ${d.date}</small></div>
+       <span class="badge ${cls[d.status]}">${d.status}</span></div>`).join('');
+  }
+
+  // ================= NAVIGATION =================
+  function goTo(v) {
+    document.querySelectorAll('nav button, .view').forEach(e => e.classList.remove('active'));
+    const b = document.querySelector(`nav button[data-v="${v}"]`);
+    b.classList.add('active'); b.classList.remove('notif');
+    document.getElementById(v).classList.add('active');
+    inputBar.style.display = v === 'chat' ? 'block' : 'none';
+    main.scrollTop = v === 'chat' ? main.scrollHeight : 0;
+    if (v === 'day') rdvs.forEach(r => r.fresh = false);
+    if (v === 'quotes') devis.forEach(d => d.fresh = false);
+  }
+  document.querySelectorAll('nav button').forEach(b => b.onclick = () => goTo(b.dataset.v));
+  const notify = v => { const b = document.querySelector(`nav button[data-v="${v}"]`); if (!b.classList.contains('active')) b.classList.add('notif'); };
+
+  document.querySelectorAll('.toggle').forEach(t => t.onclick = () => t.classList.toggle('off'));
+
+  // ================= COMPRÉHENSION DES MESSAGES =================
+  const TITLES = { m: 'M.', mr: 'M.', monsieur: 'M.', mme: 'Mme', madame: 'Mme', mlle: 'Mlle', mademoiselle: 'Mlle',
+                   famille: 'Famille', dr: 'Dr', docteur: 'Dr', sci: 'SCI' };
+  const STOP = new Set(['à','a','au','aux','demain',"aujourd'hui",'aujourd’hui','après-demain','apres-demain','ce','cet','cette',
+    'le','la','les','pour','vers','dans','qui','et','de','du','des','sur','mais','car','lundi','mardi','mercredi','jeudi',
+    'vendredi','samedi','dimanche','ma','mon','svp','stp','merci']);
+  const TITLE_RE = /(?:avec|chez|pour|de|du|à|a)\s+((?:m\.?|mr|mme\.?|madame|monsieur|mlle|famille|sci)\s.+)/i;
+
+  // Trouve le nom du client ("avec M. Petit", "chez Mme Leroy"…)
+  function getName(t, mode) {
+    let rest;
+    if (mode === 'loose') rest = t;
+    else { const m = t.match(mode === 'title' ? TITLE_RE : /(?:^|\s)(?:avec|chez)\s+(.+)/i); rest = m && m[1]; }
+    if (!rest) return null;
+    const out = [];
+    for (const raw of rest.trim().split(/\s+/)) {
+      const w = raw.replace(/[.,!?;:]+$/, ''), lw = w.toLowerCase();
+      if (!w || STOP.has(lw) || /^\d/.test(w)) break;
+      out.push(!out.length && TITLES[lw] ? TITLES[lw] : cap(w));
+      if (/[,!?;:]$/.test(raw) || out.length === 3) break;
+    }
+    if (!out.length || (out.length === 1 && Object.values(TITLES).includes(out[0]))) return null;
+    return out.join(' ');
+  }
+
+  // Heure : "14h", "14h30", "14:30", "midi"
+  function parseTime(n) {
+    if (/(^|\s)midi\b/.test(n)) return 720;
+    const m = n.match(/(?:^|[^\d])(\d{1,2})\s*(?:h|heures?|:)\s*(\d{2})?/);
+    if (!m || +m[1] > 23) return null;
+    return +m[1] * 60 + (+m[2] || 0);
+  }
+
+  // Jour : demain, après-demain, lundi…, le 25 (null = aujourd'hui)
+  function parseDay(n) {
+    if (/apres[- ]demain/.test(n)) return 'Après-demain';
+    if (/demain/.test(n)) return 'Demain';
+    const d = n.match(/\b(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b/); if (d) return cap(d[1]);
+    const dt = n.match(/\ble\s+(\d{1,2})(?!\s*(?:h|:|\d))(?:\s+(janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre))?/);
+    if (dt) return 'Le ' + dt[1] + (dt[2] ? ' ' + dt[2] : '');
+    return null;
+  }
+
+  // Motif : "pour une fuite d'eau"
+  function getMotif(t) {
+    const m = t.match(/\bpour\s+(?:(?:un|une|des|du|de la|le|la|les|sa|son|ses)\s+|l['’]\s*)?(.+)/i);
+    if (!m) return null;
+    const s = m[1].split(/\s(?:à|a|vers|avec|chez|demain|aujourd['’]hui|après-demain|apres-demain|ce|cet|cette|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|le\s+\d+)(?=\s|$)|\s\d{1,2}\s*h|[,.!?]/i)[0].trim();
+    return s ? cap(s) : null;
+  }
+
+  const iconFor = m =>
+    /bain|douche|baignoire/.test(m) ? '🛁' :
+    /fuite|robinet|plomb|tuyau|evier|wc|toilette/.test(m) ? '🔧' :
+    /chauffe|chaudiere|chauffage|radiateur/.test(m) ? '🔥' :
+    /electri|prise|tableau|lumiere/.test(m) ? '⚡' :
+    /cuisine/.test(m) ? '🍳' : '📌';
+
+  // ================= CHAT =================
+  const box = document.getElementById('messages'), txt = document.getElementById('txt');
+  let busy = false, pending = null;
+
+  function add(content, cls, isText) {
+    const d = document.createElement('div');
+    d.className = 'msg ' + cls;
+    isText ? d.textContent = content : d.innerHTML = content;
+    box.appendChild(d);
+    main.scrollTop = main.scrollHeight;
+    return d;
+  }
+
+  async function mateSay(html, delay = 900) {
+    const t = add('<span></span><span></span><span></span>', 'mate typing');
+    await sleep(delay); t.remove();
+    return add(html, 'mate');
+  }
+
+  // Bulle qui montre les tâches automatiques une par une
+  async function automation(steps) {
+    await sleep(300);
+    const d = add('<div class="auto-title">⚡ Automatisation en cours…</div>' +
+      steps.map(s => `<div class="step"><i>⏳</i><span>${s}</span></div>`).join(''), 'mate auto');
+    for (const el of d.querySelectorAll('.step')) {
+      await sleep(550);
+      el.classList.add('ok'); el.querySelector('i').textContent = '✅';
+    }
+    d.querySelector('.auto-title').textContent = '⚡ Automatisation terminée';
+  }
+
+  // ---- Nouveau rendez-vous ----
+  async function nextRdvStep() {
+    if (!pending.name) return mateSay("Avec qui est ce rendez-vous ? 🙂");
+    if (pending.min == null) return mateSay(`À quelle heure est le RDV avec <b>${esc(pending.name)}</b> ? (ex : 14h30)`);
+    const r = pending; pending = null;
+    return createRdv(r);
+  }
+
+  async function createRdv(r) {
+    r.icon = iconFor(norm(r.motif || ''));
+    r.fresh = true;
+    const known = [...rdvs, ...devis].some(x => norm(x.name) === norm(r.name));
+    const clash = !r.day && rdvs.find(x => !x.day && Math.abs(x.min - r.min) < 60);
+
+    rdvs.push(r); renderDay(); notify('day');
+    if (r.motif) {
+      devis.unshift({ name: r.name, amount: 'À chiffrer', date: "aujourd'hui", status: 'Brouillon', fresh: true });
+      renderQuotes(); notify('quotes');
+    }
+
+    await mateSay(`Parfait, c'est noté ! 📅<br><b>${esc(r.name)}</b> · ${r.day || "Aujourd'hui"} à ${fmt(r.min)}` +
+                  (r.motif ? `<br><small>${esc(r.motif)}</small>` : ''));
+    await automation([
+      'Ajouté à votre agenda',
+      known ? 'Fiche client retrouvée' : 'Nouvelle fiche client créée',
+      r.day ? 'Itinéraire préparé pour ' + r.day.toLowerCase() : 'Tournée du jour recalculée',
+      `SMS de confirmation envoyé à ${esc(r.name)}`,
+      ...(r.motif ? ['Devis brouillon préparé'] : []),
+      'Rappel programmé 30 min avant'
+    ]);
+    if (clash) await mateSay(`⚠️ Attention : vous avez déjà <b>${esc(clash.name)}</b> à ${fmt(clash.min)}. Prévoyez un peu de marge !`);
+    await mateSay(`Tout est prêt ✨<br><button class="link" data-go="day">Voir ma journée →</button>`, 600);
+  }
+
+  // ---- Cerveau de MyMate ----
+  async function handle(t) {
+    const n = norm(t);
+
+    // 1. Une info manque pour un RDV en cours ?
+    if (pending) {
+      if (/annul|laisse|oublie|stop/.test(n)) { pending = null; return mateSay("D'accord, j'oublie ce rendez-vous 👍"); }
+      if (!pending.name) pending.name = getName(t) || getName(t, 'title') || getName(t, 'loose');
+      if (pending.min == null) pending.min = parseTime(n);
+      if (!pending.day) pending.day = parseDay(n);
+      if (!pending.motif) pending.motif = getMotif(t);
+      return nextRdvStep();
+    }
+
+    // 2. Annuler un RDV
+    if (/annul|supprim|retire|enleve/.test(n)) {
+      const name = getName(t) || getName(t, 'title');
+      const key = name && norm(name).split(' ').pop();
+      const i = key ? rdvs.findIndex(r => norm(r.name).includes(key)) : -1;
+      if (i < 0) return mateSay(name ? `Je ne trouve aucun RDV avec <b>${esc(name)}</b> 🤔`
+                                     : "Quel RDV dois-je annuler ? Ex : « Annule le RDV avec M. Durand »");
+      const [r] = rdvs.splice(i, 1); renderDay(); notify('day');
+      await mateSay(`C'est annulé ❌ RDV avec <b>${esc(r.name)}</b> (${r.day || "aujourd'hui"} à ${fmt(r.min)}).`);
+      return automation(["Retiré de l'agenda", `SMS d'annulation envoyé à ${esc(r.name)}`, r.day ? 'Agenda mis à jour' : 'Tournée recalculée']);
+    }
+
+    // 3. Voir sa journée
+    if (/ma journee|mes (rdv|rendez)|quels? (rdv|rendez)|planning|programme/.test(n)) {
+      const today = todayList();
+      return mateSay(today.length
+        ? 'Voici votre journée 📅<br>' + today.map(r => `• ${fmt(r.min)} — <b>${esc(r.name)}</b>`).join('<br>') +
+          `<br><button class="link" data-go="day">Ouvrir ma journée →</button>`
+        : "Rien de prévu aujourd'hui ☀️ Profitez !");
+    }
+
+    // 4. Nouveau RDV
+    if (/\b(rendez[- ]vous|rdv)\b/.test(n)) {
+      pending = { name: getName(t) || getName(t, 'title'), min: parseTime(n), day: parseDay(n), motif: getMotif(t) };
+      return nextRdvStep();
+    }
+
+    // 5. Devis
+    if (/devis/.test(n)) {
+      const name = getName(t) || getName(t, 'title');
+      if (!name) return mateSay("Pour quel client ? Ex : « Fais un devis pour M. Petit de 800 € »");
+      const am = t.match(/(\d[\d\s.]*\d|\d)\s*(?:€|euros?)/i);
+      const amount = am ? Number(am[1].replace(/[\s.]/g, '')).toLocaleString('fr-FR') + ' €' : null;
+      devis.unshift({ name, amount: amount || 'À chiffrer', date: "aujourd'hui", status: amount ? 'Envoyé' : 'Brouillon', fresh: true });
+      renderQuotes(); notify('quotes');
+      await mateSay(amount ? `C'est parti ! 📄 Devis de <b>${amount}</b> pour <b>${esc(name)}</b>.`
+                           : `Je prépare un devis pour <b>${esc(name)}</b> 📄`);
+      await automation(amount
+        ? ['Devis généré en PDF', `Envoyé à ${esc(name)} pour signature`, 'Relance automatique dans 3 jours']
+        : ['Brouillon créé', 'Infos client pré-remplies', 'Il ne reste que le montant à indiquer']);
+      return mateSay(`<button class="link" data-go="quotes">Voir mes devis →</button>`, 500);
+    }
+
+    // 6. Heure de fin
+    if (/fini|termine|fin de journee|quelle heure/.test(n)) {
+      const today = todayList();
+      if (!today.length) return mateSay("Rien de prévu aujourd'hui, vous êtes libre ☀️");
+      const last = today[today.length - 1], end = last.min + 105;
+      return mateSay(`Dernier RDV à ${fmt(last.min)} avec <b>${esc(last.name)}</b>. Vous finissez vers <b>${fmt(end)}</b>` +
+                     (end <= 17 * 60 ? ' : assez tôt pour un foot avec les enfants ⚽' : '. Grosse journée, courage 💪'));
+    }
+
+    // 7. Politesse
+    if (/merci/.test(n)) return mateSay('Avec plaisir ! 😊');
+    if (/^(bonjour|salut|hello|coucou|hey|bonsoir)/.test(n)) return mateSay('Bonjour Thomas 👋 Que puis-je faire pour vous ?');
+
+    // 8. Pas compris
+    return mateSay("Je n'ai pas bien compris 🤔 Essayez par exemple :<br><i>« Nouveau RDV avec Mme Lambert à 15h pour un chauffe-eau »</i>");
+  }
+
+  async function send(text) {
+    text = text.trim();
+    if (!text || busy) return;
+    busy = true;
+    add(text, 'me', true);
+    txt.value = '';
+    try { await handle(text); } finally { busy = false; }
+  }
+
+  txt.onkeydown = e => { if (e.key === 'Enter') send(txt.value); };
+
+  // Boutons dans les messages ("Voir ma journée →")
+  box.onclick = e => { const go = e.target.dataset && e.target.dataset.go; if (go) goTo(go); };
+
+  // Suggestions rapides
+  document.querySelectorAll('.sg').forEach(s => s.onclick = () => {
+    if (s.dataset.fill) { txt.value = s.dataset.fill; txt.focus(); }
+    else send(s.dataset.send);
+  });
+
+  // Micro : s'il y a du texte on l'envoie, sinon on simule une dictée
+  const mic = document.getElementById('mic');
+  txt.oninput = () => mic.textContent = txt.value.trim() ? '➤' : '🎙️';
+  mic.onclick = async () => {
+    if (busy) return;
+    if (txt.value.trim()) { send(txt.value); mic.textContent = '🎙️'; return; }
+    mic.classList.add('rec');
+    const phrase = "J'ai un nouveau rendez-vous avec M. Petit demain à 10h pour une fuite d'eau";
+    for (const ch of phrase) { txt.value += ch; await sleep(22); }
+    mic.classList.remove('rec');
+    send(txt.value);
+  };
+
+  renderDay();
+  renderQuotes();
+
+  // ================= CONTACT SAV =================
+  const coord = document.getElementById('coord');
+  const picked = id => document.querySelector('#' + id + ' .sel');
+
+  document.querySelectorAll('#contact .chips, #contactWay').forEach(g => g.onclick = e => {
+    const c = e.target.closest('.chip, .opt'); if (!c) return;
+    g.querySelectorAll('.sel').forEach(x => x.classList.remove('sel'));
+    c.classList.add('sel');
+    if (g.id === 'contactWay') {
+      const v = c.dataset.v;
+      coord.style.display = v === 'app' ? 'none' : 'block';
+      coord.type = v === 'email' ? 'email' : 'tel';
+      coord.placeholder = v === 'email' ? 'votre@email.fr' : '06 12 34 56 78';
+      coord.value = '';
+    }
+  });
+
+  const upload = document.getElementById('upload');
+  upload.onclick = () => upload.textContent = '✅ photo_pendentif.jpg ajoutée';
+
+  document.getElementById('sendSav').onclick = () => {
+    const cat = document.getElementById('cat').value;
+    const desc = document.getElementById('desc').value.trim();
+    const way = picked('contactWay'), slot = picked('slot');
+    const err = document.getElementById('err');
+    if (!cat || !desc || !way || (way.dataset.v !== 'app' && !coord.value.trim())) { err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    const ticket = 'SAV-' + Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('recap').innerHTML =
+      `Ticket <b>#${ticket}</b> · ${cat}<br>Un technicien vous recontacte par <b>${way.dataset.l}</b>` +
+      (slot ? ` le <b>${slot.textContent.toLowerCase()}</b>` : '') + '.';
+    document.getElementById('savForm').style.display = 'none';
+    document.getElementById('savDone').style.display = 'block';
+    main.scrollTop = 0;
+  };
+
+  document.getElementById('newSav').onclick = () => {
+    document.querySelectorAll('#contact .sel').forEach(x => x.classList.remove('sel'));
+    document.getElementById('cat').value = '';
+    document.getElementById('desc').value = '';
+    coord.style.display = 'none'; coord.value = '';
+    upload.textContent = '📷 Ajouter une photo';
+    document.getElementById('savDone').style.display = 'none';
+    document.getElementById('savForm').style.display = 'block';
+  };
+</script>
+</body>
+</html>
