@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#fbf8f3" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
 <title>MyMate — App</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
@@ -106,6 +108,12 @@
   .toggle::after{content:"";position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
   .toggle.off{background:#d5d9e4}.toggle.off::after{right:21px}
 
+  /* ---------- BARRE DE BATTERIE ---------- */
+  .battery-card{align-items:flex-start}
+  .bar{height:8px;background:#eef0f5;border-radius:50px;margin-top:10px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:50px;background:linear-gradient(90deg,#3ccf7a,#8be0a9)}
+  .bar-days{display:flex;justify-content:space-between;font-size:.62rem;color:#9aa3bb;margin-top:5px;padding:0 2px}
+
   /* ---------- CONTACT SAV ---------- */
   label.q{display:block;font-size:.8rem;font-weight:600;color:var(--navy);margin:16px 4px 8px}
   .field{width:100%;background:#fff;border:1.5px solid transparent;border-radius:16px;padding:13px 15px;
@@ -143,6 +151,16 @@
   nav button.active span{filter:none;opacity:1}
   nav button.notif::after{content:"";position:absolute;top:2px;right:8px;width:9px;height:9px;border-radius:50%;
                           background:#ff5a5f;border:2px solid #fff}
+
+  /* ---------- PLEIN ÉCRAN SUR TÉLÉPHONE ---------- */
+  @media (max-width: 500px) {
+    body{padding:0;display:block;background:var(--cream)}
+    .phone{width:100%;height:100vh;height:100dvh;border-radius:0;padding:0;box-shadow:none;background:none}
+    .notch,.status{display:none}
+    .screen{border-radius:0}
+    header{padding-top:16px}
+    .input input,.field{font-size:16px} /* évite le zoom automatique sur iPhone */
+  }
 </style>
 </head>
 <body>
@@ -180,7 +198,15 @@
       <section class="view" id="device">
         <h2>Mon pendentif</h2>
         <div class="pendant-zone"><div class="chain"></div><div class="pendant"></div></div>
-        <div class="card"><div class="ico">🔋</div><div><b>Batterie</b><small>82 % · environ 2 jours</small></div></div>
+        <div class="card battery-card">
+          <div class="ico">🔋</div>
+          <div style="flex:1">
+            <b>Batterie · 82 %</b>
+            <small>Encore environ 6 jours · Autonomie totale : 7 jours</small>
+            <div class="bar"><div class="bar-fill" style="width:82%"></div></div>
+            <div class="bar-days"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+          </div>
+        </div>
         <div class="card"><div class="ico">🎙️</div><div><b>Écoute active</b><small>MyMate entend vos demandes</small></div><div class="toggle"></div></div>
         <div class="card"><div class="ico">🔔</div><div><b>Rappels vocaux</b><small>Avant chaque RDV</small></div><div class="toggle"></div></div>
         <div class="card"><div class="ico">🌙</div><div><b>Mode famille</b><small>Silence après 18h</small></div><div class="toggle off"></div></div>
@@ -267,6 +293,7 @@
         <div class="sg" data-send="Fais un devis pour M. Petit de 850 €">📄 Faire un devis</div>
         <div class="sg" data-send="Je finis à quelle heure ?">🕓 Je finis quand ?</div>
         <div class="sg" data-send="C'est quoi ma journée ?">🗓️ Ma journée</div>
+        <div class="sg" data-send="Il me reste combien de batterie ?">🔋 Batterie</div>
         <div class="sg" data-send="Annule le RDV avec M. Durand">❌ Annuler un RDV</div>
       </div>
       <div class="input">
@@ -368,7 +395,6 @@
     'vendredi','samedi','dimanche','ma','mon','svp','stp','merci']);
   const TITLE_RE = /(?:avec|chez|pour|de|du|à|a)\s+((?:m\.?|mr|mme\.?|madame|monsieur|mlle|famille|sci)\s.+)/i;
 
-  // Trouve le nom du client ("avec M. Petit", "chez Mme Leroy"…)
   function getName(t, mode) {
     let rest;
     if (mode === 'loose') rest = t;
@@ -385,7 +411,6 @@
     return out.join(' ');
   }
 
-  // Heure : "14h", "14h30", "14:30", "midi"
   function parseTime(n) {
     if (/(^|\s)midi\b/.test(n)) return 720;
     const m = n.match(/(?:^|[^\d])(\d{1,2})\s*(?:h|heures?|:)\s*(\d{2})?/);
@@ -393,7 +418,6 @@
     return +m[1] * 60 + (+m[2] || 0);
   }
 
-  // Jour : demain, après-demain, lundi…, le 25 (null = aujourd'hui)
   function parseDay(n) {
     if (/apres[- ]demain/.test(n)) return 'Après-demain';
     if (/demain/.test(n)) return 'Demain';
@@ -403,7 +427,6 @@
     return null;
   }
 
-  // Motif : "pour une fuite d'eau"
   function getMotif(t) {
     const m = t.match(/\bpour\s+(?:(?:un|une|des|du|de la|le|la|les|sa|son|ses)\s+|l['’]\s*)?(.+)/i);
     if (!m) return null;
@@ -420,6 +443,7 @@
 
   // ================= CHAT =================
   const box = document.getElementById('messages'), txt = document.getElementById('txt');
+  const mic = document.getElementById('mic');
   let busy = false, pending = null;
 
   function add(content, cls, isText) {
@@ -437,7 +461,6 @@
     return add(html, 'mate');
   }
 
-  // Bulle qui montre les tâches automatiques une par une
   async function automation(steps) {
     await sleep(300);
     const d = add('<div class="auto-title">⚡ Automatisation en cours…</div>' +
@@ -449,7 +472,6 @@
     d.querySelector('.auto-title').textContent = '⚡ Automatisation terminée';
   }
 
-  // ---- Nouveau rendez-vous ----
   async function nextRdvStep() {
     if (!pending.name) return mateSay("Avec qui est ce rendez-vous ? 🙂");
     if (pending.min == null) return mateSay(`À quelle heure est le RDV avec <b>${esc(pending.name)}</b> ? (ex : 14h30)`);
@@ -483,11 +505,10 @@
     await mateSay(`Tout est prêt ✨<br><button class="link" data-go="day">Voir ma journée →</button>`, 600);
   }
 
-  // ---- Cerveau de MyMate ----
   async function handle(t) {
     const n = norm(t);
 
-    // 1. Une info manque pour un RDV en cours ?
+    // Une info manque pour un RDV en cours
     if (pending) {
       if (/annul|laisse|oublie|stop/.test(n)) { pending = null; return mateSay("D'accord, j'oublie ce rendez-vous 👍"); }
       if (!pending.name) pending.name = getName(t) || getName(t, 'title') || getName(t, 'loose');
@@ -497,7 +518,7 @@
       return nextRdvStep();
     }
 
-    // 2. Annuler un RDV
+    // Annuler un RDV
     if (/annul|supprim|retire|enleve/.test(n)) {
       const name = getName(t) || getName(t, 'title');
       const key = name && norm(name).split(' ').pop();
@@ -509,7 +530,7 @@
       return automation(["Retiré de l'agenda", `SMS d'annulation envoyé à ${esc(r.name)}`, r.day ? 'Agenda mis à jour' : 'Tournée recalculée']);
     }
 
-    // 3. Voir sa journée
+    // Voir sa journée
     if (/ma journee|mes (rdv|rendez)|quels? (rdv|rendez)|planning|programme/.test(n)) {
       const today = todayList();
       return mateSay(today.length
@@ -518,13 +539,13 @@
         : "Rien de prévu aujourd'hui ☀️ Profitez !");
     }
 
-    // 4. Nouveau RDV
+    // Nouveau RDV
     if (/\b(rendez[- ]vous|rdv)\b/.test(n)) {
       pending = { name: getName(t) || getName(t, 'title'), min: parseTime(n), day: parseDay(n), motif: getMotif(t) };
       return nextRdvStep();
     }
 
-    // 5. Devis
+    // Devis
     if (/devis/.test(n)) {
       const name = getName(t) || getName(t, 'title');
       if (!name) return mateSay("Pour quel client ? Ex : « Fais un devis pour M. Petit de 800 € »");
@@ -540,7 +561,13 @@
       return mateSay(`<button class="link" data-go="quotes">Voir mes devis →</button>`, 500);
     }
 
-    // 6. Heure de fin
+    // Batterie (autonomie d'une semaine)
+    if (/batterie|autonomie|recharg|charge/.test(n)) {
+      return mateSay("Votre pendentif est à <b>82 %</b> 🔋<br>Il vous reste environ <b>6 jours</b> sur une autonomie d'une semaine. Pas besoin de le recharger avant la semaine prochaine 😉" +
+                     `<br><button class="link" data-go="device">Voir mon pendentif →</button>`);
+    }
+
+    // Heure de fin
     if (/fini|termine|fin de journee|quelle heure/.test(n)) {
       const today = todayList();
       if (!today.length) return mateSay("Rien de prévu aujourd'hui, vous êtes libre ☀️");
@@ -549,11 +576,10 @@
                      (end <= 17 * 60 ? ' : assez tôt pour un foot avec les enfants ⚽' : '. Grosse journée, courage 💪'));
     }
 
-    // 7. Politesse
+    // Politesse
     if (/merci/.test(n)) return mateSay('Avec plaisir ! 😊');
     if (/^(bonjour|salut|hello|coucou|hey|bonsoir)/.test(n)) return mateSay('Bonjour Thomas 👋 Que puis-je faire pour vous ?');
 
-    // 8. Pas compris
     return mateSay("Je n'ai pas bien compris 🤔 Essayez par exemple :<br><i>« Nouveau RDV avec Mme Lambert à 15h pour un chauffe-eau »</i>");
   }
 
@@ -563,26 +589,23 @@
     busy = true;
     add(text, 'me', true);
     txt.value = '';
+    mic.textContent = '🎙️';
     try { await handle(text); } finally { busy = false; }
   }
 
   txt.onkeydown = e => { if (e.key === 'Enter') send(txt.value); };
 
-  // Boutons dans les messages ("Voir ma journée →")
   box.onclick = e => { const go = e.target.dataset && e.target.dataset.go; if (go) goTo(go); };
 
-  // Suggestions rapides
   document.querySelectorAll('.sg').forEach(s => s.onclick = () => {
-    if (s.dataset.fill) { txt.value = s.dataset.fill; txt.focus(); }
+    if (s.dataset.fill) { txt.value = s.dataset.fill; txt.focus(); mic.textContent = '➤'; }
     else send(s.dataset.send);
   });
 
-  // Micro : s'il y a du texte on l'envoie, sinon on simule une dictée
-  const mic = document.getElementById('mic');
   txt.oninput = () => mic.textContent = txt.value.trim() ? '➤' : '🎙️';
   mic.onclick = async () => {
     if (busy) return;
-    if (txt.value.trim()) { send(txt.value); mic.textContent = '🎙️'; return; }
+    if (txt.value.trim()) { send(txt.value); return; }
     mic.classList.add('rec');
     const phrase = "J'ai un nouveau rendez-vous avec M. Petit demain à 10h pour une fuite d'eau";
     for (const ch of phrase) { txt.value += ch; await sleep(22); }
@@ -622,7 +645,7 @@
     err.style.display = 'none';
     const ticket = 'SAV-' + Math.floor(1000 + Math.random() * 9000);
     document.getElementById('recap').innerHTML =
-      `Ticket <b>#${ticket}</b> · ${cat}<br>Un technicien vous recontacte par <b>${way.dataset.l}</b>` +
+      `Ticket <b>#${ticket}</b> · ${esc(cat)}<br>Un technicien vous recontacte par <b>${way.dataset.l}</b>` +
       (slot ? ` le <b>${slot.textContent.toLowerCase()}</b>` : '') + '.';
     document.getElementById('savForm').style.display = 'none';
     document.getElementById('savDone').style.display = 'block';
